@@ -1,1 +1,60 @@
 
+name: Build Wemos APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:   # memungkinkan tombol "Run workflow" manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout kode dari repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 3. Setup Java 17 (wajib untuk Android 34)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 4. Setup Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 5. Install Cordova CLI
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      # 6. Install dependencies (jika ada di package.json)
+      - name: Install npm dependencies
+        run: npm install
+
+      # 7. Tambahkan platform Android
+      - name: Add Android platform
+        run: cordova platform add android@13.0.0
+
+      # 8. Siapkan plugin (Cordova akan membaca dari package.json)
+      - name: Prepare plugins
+        run: cordova prepare
+
+      # 9. Build APK (Debug)
+      - name: Build APK (Debug)
+        run: cordova build android --debug
+
+      # 10. Upload APK sebagai artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wemos-apk-debug
+          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
